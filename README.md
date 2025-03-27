@@ -1,6 +1,6 @@
 # pod-stats
 
-The project uses uses eBPF to collect real-time statistics from Kubernetes pods on a single node, focusing on file opens and memory usage. It can be extended furthur to collect other stats, due to time constraints I worked till this basic implementation.
+The project uses eBPF to collect real-time statistics from Kubernetes pods on a single node, focusing on file opens and memory usage. It can be extended furthur to collect other stats, due to time constraints I worked till this basic implementation.
 
 **src/pod_stats.h :**
 - Defines struct pod_stats (open_files, rss_bytes, timestamp, pod_name) shared between kernel and userspace.
