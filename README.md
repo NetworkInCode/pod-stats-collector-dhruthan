@@ -43,7 +43,9 @@ To track pod statistics over time, you can set up pod-stats as a cron job to log
 
 **3. Security monitoring [FUTURE IMPROVEMENT]:** Extend to track network I/O (e.g., via tcp_sendmsg) to detect unusual activity.
 
-**4. Anomaly Detection and Alerts: [FUTURE IMPROVEMENT]:** Add thresholds for statistics and send alerts and Integrate with monitoring systems like Prometheus for time-series analysis and visualization.
+**4. Anomaly Detection and alerting [FUTURE IMPROVEMENT]:** Add thresholds for statistics and send alerts and Integrate with monitoring systems like Prometheus for time-series analysis and visualization
+
+
 ---------
 
 ## Steps to run
@@ -55,7 +57,7 @@ To track pod statistics over time, you can set up pod-stats as a cron job to log
    make
    ``` 
 
-**3. Clean up existing TC hooks**
+**3. Run executable**
    ```
    sudo ./pod-stats
    ``` 
