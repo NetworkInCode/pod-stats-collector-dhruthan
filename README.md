@@ -1,80 +1,66 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/KpvttnVe)
 # pod-stats
 
-Objective
+The project uses uses eBPF to collect real-time statistics from Kubernetes pods on a single node, focusing on file opens and memory usage. It can be extended furthur to collect other stats, due to time constraints I worked till this basic implementation.
+
+**src/pod_stats.h :**
+- Defines struct pod_stats (open_files, rss_bytes, timestamp, pod_name) shared between kernel and userspace.
+
+**src/bpf_prog.c :**
+- Tracepoints:
+  - sys_enter_openat: Increments open_files for each file open.
+  - sched_switch: Updates timestamp (could be extended for more stats).
+
+- Map: pod_stats_map (BPF hash map) stores stats by PID.
+
+**src/bpf_prog.c :**
+- Setup: Loads and attaches eBPF programs using libbpf.
+- Stats Collection:
+  - Polls pod_stats_map every 2 seconds.
+  - Fetches RSS from /proc/<pid>/statm.
+  - Maps PIDs to pod identifiers via /proc/<pid>/cgroup.
+    
+
 ---------
 
-Write a simple eBPF-based stats collector for a kubernetes cluster. Some of the sample stats could be:
+## Implementation
 
-- Files opened by the pod
-- Memory usage of the pod in real time
-- Any container-level stats that you think could be useful
-- ......
+- **Architecture :** Uses tracepoints for low-overhead monitoring; hash map ensures O(1) stat access.
+- **Pod Identification :**  Parses cgroup paths, with temporary PID-to-name mapping (replaceable with Kubernetes API).
+- **Optimization :**  Deduplication reduces output noise; could be further optimized with ring buffers for high-frequency updates.
+
+
+## Limitations
+   Outputs pod UIDs (e.g., pod-ad71dc62_baff_4ba7_9b97_0c182ef4f431) instead of names like nginx-pod which could be improved. Also other statistics could be added.
   
-The stats list is intentionally open-ended. You can add as many to the list as you would like :)
+   
+## Use cases
 
-The tool should be run on-demand basis and provide current stats when invoked. 
+To track pod statistics over time, you can set up pod-stats as a cron job to log data periodically.
 
-Repository Setup
-----------------
+**1. Memory Usage Monitoring:** Observe RSS (MB) spikes to identify memory-intensive processes and also troubleshooting.
+      
+**2. Pod Health checking:** Verify that critical pods (e.g., nginx-pod) maintain stable resource usage, providing instant feedback on pod stability.
 
-1. Clone the repository
-```
-git clone <>
-cd pod-stats
-```
-2. Modify and extend the provided template according to the requirements.
-3. Also upload a screen recording and/or detailed screenshots (with captions) of the tool running on your system.
+**3. Security monitoring [FUTURE IMPROVEMENT]:** Extend to track network I/O (e.g., via tcp_sendmsg) to detect unusual activity.
 
-Implementation Details
-----------------------
+**4. Anomaly Detection and Alerts: [FUTURE IMPROVEMENT]:** Add thresholds for statistics and send alerts and Integrate with monitoring systems like Prometheus for time-series analysis and visualization.
+---------
 
-1. Use eBPF to track pod activity.
-2. Collect stats like number of open files, memory usage etc.
-3. The user-space control program can be implemented using libbpf, BCC or Go eBPF.
-4. Provide logging for debugging and verification
+## Steps to run
 
-Judgement Criteria
--------------------
+**1. Clone this repo and Navigate to directory**
+      
+**2. Compile the project**
+   ```
+   make
+   ``` 
 
-Expected test environment for qualifcation: A kubernetes cluster with one node and at least one pod running. 
-The tool should connect to the k8s cluster and fetch all stats from the running pod. If there is more than one pod running, the tool should spew out stats for all pods in a neat format.
+**3. Clean up existing TC hooks**
+   ```
+   sudo ./pod-stats
+   ``` 
 
-The code will be judged based on the following aspects:
-
-- Architecture of the eBPF program
-- How optimised is the logic for fetching per-pod details in eBPF.
-- Utility of the stats collected
-- Any real-time use cases that can be demonstrated for the stats collected
-- Any use cases for the collected stats that can be of significant value with future extensions.
-- Documentation of the implementation and code structure
-
-Repository Structure
---------------------
-
-```
-/ (Root)
-│── README.md          # Detailed assignment instructions
-│── Makefile           # Build and run commands
-│── src/
-│   │── main.c         # User-space control program
-│   │── bpf_prog.c     # eBPF program to get pod stats
-│── scripts/
-│   │── test.sh        # Script to test the program
-|── testing
-|   |── README.md      # Details of the implementation, test environment and test cases covered, stats collected, including a brief on how each one could be of significance
-```
-
-PLEASE NOTE: The repository serves only as a starter template and is flexible to modifications. It could be extended with additional files/folders as appropriate and even based on the library that is chosen for implementation. Just ensure the there is a test script and a detailed documentation of what each file does.
+	
+![Output](Sample_Output.png)
 
 
-Submission Instructions
-------------------------
-
-1. Complete your implementation and ensure it meets the assignment requirements.
-2. Update the README.md with detailed instructions on how to build and run your solution.
-3. Make a pull request (PR) to submit your final code.
-4. Your PR should include:
-   - A description of your implementation.
-   - Any limitations or known issues.
-   - Example test cases
